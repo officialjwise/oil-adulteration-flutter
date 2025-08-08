@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import '../services/api_service.dart';
 import '../services/file_service.dart';
 import '../models/oil_analysis_result.dart';
-import 'dart:io';
 
 class TestScreen extends StatefulWidget {
   static final List<TestResult> resultsHistory = [
@@ -45,7 +43,6 @@ class TestScreen extends StatefulWidget {
 class _TestScreenState extends State<TestScreen> {
   int _step = 1;
   String? _selectedOilType;
-  String? _selectedInputMethod;
   bool _analysisInProgress = false;
   bool _analysisComplete = false;
   bool _csvLoading = false;
@@ -54,6 +51,13 @@ class _TestScreenState extends State<TestScreen> {
 
   final ApiService _apiService = ApiService();
   final FileService _fileService = FileService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Default to Palm Oil as the selected type
+    _selectedOilType = 'Palm Oil';
+  }
 
   Future<void> _pickCsvAndAnalyze() async {
     setState(() {
@@ -108,11 +112,27 @@ class _TestScreenState extends State<TestScreen> {
       });
 
       // Call API for analysis
-      final apiResponse = await _apiService.predictOilAdulteration(csvFile);
+      if (_selectedOilType == null) {
+        setState(() {
+          _analysisInProgress = false;
+          _errorMessage = 'Please select an oil type before analysis';
+        });
+        _showErrorDialog();
+        return;
+      }
+
+      final apiResponse = await _apiService.predictOilAdulteration(
+        csvFile,
+        _selectedOilType!,
+      );
 
       if (apiResponse.isSuccess && apiResponse.data != null) {
         // Analysis successful
         final results = apiResponse.data!;
+
+        // Add a delay to show the analysis progress longer
+        await Future.delayed(const Duration(seconds: 3));
+
         setState(() {
           _analysisInProgress = false;
           _analysisComplete = true;
@@ -128,8 +148,8 @@ class _TestScreenState extends State<TestScreen> {
         setState(() {
           _analysisInProgress = false;
           _analysisComplete = false;
-          _errorMessage = apiResponse.error ?? 'Analysis failed';
-          _step = 2; // Go back to input method selection
+          _errorMessage =
+              apiResponse.error ?? 'Analysis failed. Please try again.';
         });
         _showErrorDialog();
       }
@@ -138,8 +158,7 @@ class _TestScreenState extends State<TestScreen> {
         _csvLoading = false;
         _analysisInProgress = false;
         _analysisComplete = false;
-        _errorMessage = 'Unexpected error: $e';
-        _step = 2;
+        _errorMessage = 'An unexpected error occurred: $e';
       });
       _showErrorDialog();
     }
@@ -248,10 +267,6 @@ class _TestScreenState extends State<TestScreen> {
                     ),
                     onPressed: () {},
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.settings, color: Color(0xFF6B7280)),
-                    onPressed: () {},
-                  ),
                 ],
               ),
             ),
@@ -317,6 +332,11 @@ class _TestScreenState extends State<TestScreen> {
                       backgroundColor: _selectedOilType != null
                           ? const Color(0xFF4A90E2)
                           : const Color(0xFFB6C6E3),
+                      foregroundColor: _selectedOilType != null
+                          ? Colors.white
+                          : const Color(0xFF1F2937),
+                      disabledBackgroundColor: const Color(0xFFB6C6E3),
+                      disabledForegroundColor: const Color(0xFF1F2937),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -324,7 +344,6 @@ class _TestScreenState extends State<TestScreen> {
                     onPressed: _selectedOilType != null
                         ? () => setState(() {
                             _step = 2;
-                            _selectedInputMethod = null;
                           })
                         : null,
                     child: const Text(
@@ -355,7 +374,7 @@ class _TestScreenState extends State<TestScreen> {
                   vertical: 6,
                 ),
                 child: Text(
-                  'Choose your data input method',
+                  'Upload your CSV file exported from your spectroscopic device',
                   style: const TextStyle(
                     fontSize: 15,
                     color: Color(0xFF6B7280),
@@ -364,37 +383,16 @@ class _TestScreenState extends State<TestScreen> {
               ),
               const SizedBox(height: 8),
               _inputMethodCard(
-                'Manual Data Entry',
-                'Enter spectroscopic values manually (50+ fields)',
-                Icons.opacity,
-                label: 'Advanced',
-                color: const Color(0xFFEEF4FF),
-                selected: _selectedInputMethod == 'Manual',
-                onTap: () => setState(() => _selectedInputMethod = 'Manual'),
-              ),
-              _inputMethodCard(
                 'Upload CSV File',
                 'Import data from CSV file format',
                 Icons.upload_file,
                 label: 'Recommended',
                 color: const Color(0xFFFFF7E6),
                 labelColor: Colors.orange,
-                selected: _selectedInputMethod == 'CSV',
+                selected: true,
                 onTap: () async {
-                  setState(() => _selectedInputMethod = 'CSV');
                   await _pickCsvAndAnalyze();
                 },
-              ),
-              _inputMethodCard(
-                'QR Code Scanner',
-                'Scan QR code from spectroscopic equipment',
-                Icons.qr_code_scanner,
-                label: 'Camera',
-                color: const Color(0xFFFFF7E6),
-                labelColor: Colors.black87,
-                trailingIcon: Icons.camera_alt,
-                selected: _selectedInputMethod == 'QR',
-                onTap: () => setState(() => _selectedInputMethod = 'QR'),
               ),
               if (_csvLoading)
                 const Padding(
@@ -424,41 +422,6 @@ class _TestScreenState extends State<TestScreen> {
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: Color(0xFF4A90E2),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              _selectedInputMethod != null && !_csvLoading
-                              ? const Color(0xFF1746A2)
-                              : const Color(0xFFB6C6E3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed:
-                            _selectedInputMethod != null &&
-                                !_csvLoading &&
-                                _selectedInputMethod != 'CSV'
-                            ? () {
-                                if (_selectedInputMethod == 'Manual') {
-                                  _showManualEntryForm();
-                                } else if (_selectedInputMethod == 'QR') {
-                                  _scanQRCode();
-                                } else {
-                                  _startAnalysis();
-                                }
-                              }
-                            : null,
-                        child: const Text(
-                          'Start Analysis',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
                           ),
                         ),
                       ),
@@ -785,7 +748,9 @@ class _TestScreenState extends State<TestScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: (color ?? const Color(0xFFF1F5F9)).withOpacity(0.2),
+        color: (color ?? const Color(0xFFF1F5F9)).withAlpha(
+          51,
+        ), // 0.2 * 255 = 51
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -811,7 +776,7 @@ class _TestScreenState extends State<TestScreen> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withAlpha(10),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -873,7 +838,7 @@ class _TestScreenState extends State<TestScreen> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withAlpha(10),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -902,7 +867,7 @@ class _TestScreenState extends State<TestScreen> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withAlpha(10),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1003,637 +968,5 @@ class _TestScreenState extends State<TestScreen> {
         ],
       ),
     );
-  }
-
-  Widget _analysisResultWidget() {
-    // Use the latest results from API, or fall back to mock data
-    final result =
-        _latestResults?.first ??
-        OilAnalysisResult(
-          sampleId: 'SAMPLE-001',
-          status: 'Pure',
-          confidence: 0.968,
-          oilType: _selectedOilType ?? 'Palm Oil',
-          analysisTime: '47s',
-          timestamp: DateTime.now(),
-        );
-
-    final isPure = result.isPure;
-    final cardColor = isPure
-        ? const Color(0xFF22C55E)
-        : const Color(0xFFEF4444);
-    final icon = isPure ? Icons.check_circle : Icons.warning;
-    final statusText = result.statusMessage;
-    final detailText = isPure
-        ? 'No adulteration detected in the sample'
-        : 'Adulteration detected in this sample';
-
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 24),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Icon(icon, size: 54, color: Colors.white),
-                const SizedBox(height: 16),
-                Text(
-                  statusText,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  detailText,
-                  style: const TextStyle(fontSize: 15, color: Colors.white),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                      children: [
-                        Text(
-                          result.confidencePercentage,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Confidence',
-                          style: TextStyle(fontSize: 14, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Text(
-                          result.analysisTime,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Analysis Time',
-                          style: TextStyle(fontSize: 14, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Sample Information',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(Icons.science, color: Color(0xFF1746A2)),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'Sample ID',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF6B7280),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'SAMPLE-001',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: Color(0xFF1F2937),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(Icons.remove_red_eye, color: Color(0xFF1746A2)),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'Oil Type',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF6B7280),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'Palm Oil',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: Color(0xFF1F2937),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.location_on, color: Color(0xFF1746A2)),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'Location',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF6B7280),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'Lab Room 1',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: Color(0xFF1F2937),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(Icons.calendar_today, color: Color(0xFF1746A2)),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'Test Date',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF6B7280),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        '2025-08-07',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: Color(0xFF1F2937),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Key Findings',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _findingTile(
-                  'Fatty Acid Profile',
-                  'Normal range',
-                  'WHO Standards',
-                  'normal',
-                ),
-                _findingTile(
-                  'Peroxide Value',
-                  '2.1 meq O2/kg',
-                  '< 10.0',
-                  'normal',
-                ),
-                _findingTile('Free Fatty Acids', '0.8%', '< 1.0%', 'normal'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  Widget _findingTile(
-    String title,
-    String value,
-    String reference,
-    String status,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                Text(
-                  'Reference: $reference',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF1746A2),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: status == 'normal'
-                  ? const Color(0xFF1746A2)
-                  : const Color(0xFFEF4444),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              status,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showManualEntryForm() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ManualDataEntryScreen(
-          oilType: _selectedOilType ?? 'Palm Oil',
-          onAnalysisComplete: (result) {
-            TestScreen.resultsHistory.insert(0, result);
-            setState(() {
-              _step = 3;
-              _analysisInProgress = false;
-              _analysisComplete = true;
-            });
-          },
-        ),
-      ),
-    );
-  }
-
-  void _scanQRCode() {
-    // QR Code scanning implementation
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('QR Code Scanner'),
-        content: const Text(
-          'QR Code scanning functionality will be implemented here.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _startAnalysis() {
-    setState(() {
-      _step = 3;
-      _analysisInProgress = true;
-      _analysisComplete = false;
-    });
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _analysisInProgress = false;
-        _analysisComplete = true;
-      });
-      TestScreen.resultsHistory.insert(
-        0,
-        TestResult(
-          id: 'SAMPLE-00${TestScreen.resultsHistory.length + 1}',
-          oilType: _selectedOilType ?? 'Palm Oil',
-          status: 'Pure',
-          date: DateTime.now().toString().substring(0, 10),
-          confidence: 96.8,
-        ),
-      );
-    });
-  }
-}
-
-// Manual Data Entry Screen
-class ManualDataEntryScreen extends StatefulWidget {
-  final String oilType;
-  final Function(TestResult) onAnalysisComplete;
-
-  const ManualDataEntryScreen({
-    super.key,
-    required this.oilType,
-    required this.onAnalysisComplete,
-  });
-
-  @override
-  State<ManualDataEntryScreen> createState() => _ManualDataEntryScreenState();
-}
-
-class _ManualDataEntryScreenState extends State<ManualDataEntryScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final Map<String, TextEditingController> _controllers = {};
-  bool _isAnalyzing = false;
-
-  final List<Map<String, dynamic>> _dataFields = [
-    {'label': 'Absorbance at 400nm', 'key': 'abs_400', 'unit': 'AU'},
-    {'label': 'Absorbance at 450nm', 'key': 'abs_450', 'unit': 'AU'},
-    {'label': 'Absorbance at 500nm', 'key': 'abs_500', 'unit': 'AU'},
-    {'label': 'Absorbance at 550nm', 'key': 'abs_550', 'unit': 'AU'},
-    {'label': 'Absorbance at 600nm', 'key': 'abs_600', 'unit': 'AU'},
-    {'label': 'Refractive Index', 'key': 'ref_index', 'unit': ''},
-    {'label': 'Density', 'key': 'density', 'unit': 'g/cm³'},
-    {'label': 'Viscosity', 'key': 'viscosity', 'unit': 'cP'},
-    {'label': 'pH Value', 'key': 'ph', 'unit': ''},
-    {'label': 'Moisture Content', 'key': 'moisture', 'unit': '%'},
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    for (var field in _dataFields) {
-      _controllers[field['key']] = TextEditingController();
-    }
-  }
-
-  @override
-  void dispose() {
-    for (var controller in _controllers.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1F2937)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Manual Data Entry',
-              style: TextStyle(
-                color: Color(0xFF1F2937),
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            Text(
-              widget.oilType,
-              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
-            ),
-          ],
-        ),
-      ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: _dataFields.length,
-                itemBuilder: (context, index) {
-                  final field = _dataFields[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: TextFormField(
-                      controller: _controllers[field['key']],
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: field['label'],
-                        suffixText: field['unit'],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'This field is required';
-                        }
-                        if (double.tryParse(value) == null) {
-                          return 'Please enter a valid number';
-                        }
-                        return null;
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x0A000000),
-                    blurRadius: 10,
-                    offset: Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF4A90E2)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Color(0xFF4A90E2),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isAnalyzing ? null : _analyzeData,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1746A2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: _isAnalyzing
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'Analyze',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _analyzeData() {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isAnalyzing = true);
-
-      // Simulate analysis processing
-      Future.delayed(const Duration(seconds: 3), () {
-        // Generate result based on input values
-        final result = TestResult(
-          id: 'SAMPLE-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
-          oilType: widget.oilType,
-          status: _generateStatus(),
-          date: DateTime.now().toString().substring(0, 10),
-          confidence: _generateConfidence(),
-        );
-
-        widget.onAnalysisComplete(result);
-        Navigator.pop(context);
-      });
-    }
-  }
-
-  String _generateStatus() {
-    // Simple analysis based on some field values
-    final absorbance =
-        double.tryParse(_controllers['abs_500']?.text ?? '0') ?? 0;
-    final density = double.tryParse(_controllers['density']?.text ?? '0') ?? 0;
-
-    if (absorbance > 0.8 || density > 1.2) {
-      return 'Adulterated';
-    } else if (absorbance < 0.3 && density < 0.9) {
-      return 'Pure';
-    } else {
-      return 'Processing';
-    }
-  }
-
-  double _generateConfidence() {
-    // Generate confidence based on input consistency
-    return 85.0 + (DateTime.now().millisecond % 15);
   }
 }

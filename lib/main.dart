@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/main_dashboard.dart';
+import 'screens/splash_screen.dart';
+import 'services/api_service.dart';
 
 void main() {
   runApp(const OilGuardApp());
@@ -23,7 +24,7 @@ class OilGuardApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(),
         useMaterial3: true,
       ),
-      home: const MainDashboard(),
+      home: const SplashScreen(),
     );
   }
 }

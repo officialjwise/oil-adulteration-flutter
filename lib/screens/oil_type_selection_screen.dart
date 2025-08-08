@@ -14,40 +14,40 @@ class _OilTypeSelectionScreenState extends State<OilTypeSelectionScreen> {
 
   final List<Map<String, dynamic>> oilTypes = [
     {
-      'type': 'Engine Oil',
-      'description': 'Motor vehicle engine lubricants',
-      'icon': Icons.directions_car,
-      'color': Color(0xFF3B82F6),
+      'type': 'Palm Oil',
+      'description': 'Common edible vegetable oil',
+      'icon': Icons.local_florist,
+      'color': const Color(0xFFEF6C00),
     },
     {
-      'type': 'Hydraulic Oil',
-      'description': 'Hydraulic system fluids',
-      'icon': Icons.build,
-      'color': Color(0xFF8B5CF6),
+      'type': 'Groundnut Oil',
+      'description': 'Peanut-based edible oil',
+      'icon': Icons.spa,
+      'color': const Color(0xFF8B5CF6),
     },
     {
-      'type': 'Gear Oil',
-      'description': 'Transmission and differential oils',
-      'icon': Icons.settings,
-      'color': Color(0xFF10B981),
+      'type': 'Sunflower Oil',
+      'description': 'Light edible cooking oil',
+      'icon': Icons.wb_sunny_outlined,
+      'color': const Color(0xFFF59E0B),
     },
     {
-      'type': 'Turbine Oil',
-      'description': 'Gas and steam turbine lubricants',
-      'icon': Icons.wind_power,
-      'color': Color(0xFFF59E0B),
+      'type': 'Soybean Oil',
+      'description': 'Widely used edible oil',
+      'icon': Icons.eco_outlined,
+      'color': const Color(0xFF10B981),
     },
     {
-      'type': 'Compressor Oil',
-      'description': 'Air and gas compressor lubricants',
-      'icon': Icons.air,
-      'color': Color(0xFFEF4444),
+      'type': 'Mustard Oil',
+      'description': 'Strong-flavored edible oil',
+      'icon': Icons.grass,
+      'color': const Color(0xFF6366F1),
     },
     {
-      'type': 'Transformer Oil',
-      'description': 'Electrical transformer insulating oil',
-      'icon': Icons.electrical_services,
-      'color': Color(0xFF6366F1),
+      'type': 'Coconut Oil',
+      'description': 'Edible oil from coconuts',
+      'icon': Icons.beach_access_outlined,
+      'color': const Color(0xFF00ACC1),
     },
   ];
 
@@ -81,8 +81,8 @@ class _OilTypeSelectionScreenState extends State<OilTypeSelectionScreen> {
                 Container(
                   width: 80,
                   height: 80,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
                       colors: [Color(0xFF2B5CE6), Color(0xFF1E40AF)],
                     ),
                     shape: BoxShape.circle,
@@ -104,7 +104,7 @@ class _OilTypeSelectionScreenState extends State<OilTypeSelectionScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Select the type of oil you want to analyze for the most accurate results',
+                  'Select the edible oil you want to analyze',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 ),
@@ -147,7 +147,7 @@ class _OilTypeSelectionScreenState extends State<OilTypeSelectionScreen> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withAlpha(13), // 0.05
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -162,18 +162,20 @@ class _OilTypeSelectionScreenState extends State<OilTypeSelectionScreen> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: oilType['color'].withOpacity(0.1),
+                                color: (oilType['color'] as Color).withAlpha(
+                                  26,
+                                ), // 0.1
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                oilType['icon'],
+                                oilType['icon'] as IconData,
                                 size: 30,
-                                color: oilType['color'],
+                                color: oilType['color'] as Color,
                               ),
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              oilType['type'],
+                              oilType['type'] as String,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -185,7 +187,7 @@ class _OilTypeSelectionScreenState extends State<OilTypeSelectionScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              oilType['description'],
+                              oilType['description'] as String,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 12,
@@ -229,10 +231,10 @@ class _OilTypeSelectionScreenState extends State<OilTypeSelectionScreen> {
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2B5CE6).withOpacity(0.1),
+                      color: const Color(0xFF2B5CE6).withAlpha(26), // 0.1
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF2B5CE6).withOpacity(0.2),
+                        color: const Color(0xFF2B5CE6).withAlpha(51), // 0.2
                       ),
                     ),
                     child: Row(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import 'oil_type_selection_screen.dart';
+import '../services/api_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -12,43 +13,63 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _companyController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _organizationController = TextEditingController();
+  final _phoneController = TextEditingController();
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
+  bool _isLoading = false;
+  final ApiService _api = ApiService();
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
-    _companyController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _organizationController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
+    if (value == null || value.isEmpty) return 'Password is required';
+    if (value.length < 8) return 'Password must be at least 8 characters';
     return null;
   }
 
-  String? _validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
+  Future<void> _handleSignUp() async {
+    if (!_acceptTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please accept the terms and conditions')),
+      );
+      return;
     }
-    if (value != _passwordController.text) {
-      return 'Passwords do not match';
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    final res = await _api.signUp(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      organization: _organizationController.text.trim(),
+      phoneNumber: _phoneController.text.trim(),
+    );
+    setState(() => _isLoading = false);
+
+    if (res.isSuccess) {
+      // Token is set in ApiService interceptor. Proceed.
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const OilTypeSelectionScreen()),
+      );
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(res.error ?? 'Sign up failed')));
     }
-    return null;
   }
 
   @override
@@ -114,7 +135,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Full Name',
+                        'Name',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -123,14 +144,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(height: 8),
                       CustomTextField(
-                        controller: _fullNameController,
-                        hintText: 'Enter your full name',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Full name is required';
-                          }
-                          return null;
-                        },
+                        controller: _nameController,
+                        hintText: 'Your full name',
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? 'Name is required'
+                            : null,
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -152,26 +170,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           }
                           if (!value.contains('@')) {
                             return 'Please enter a valid email';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Company',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF333333),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      CustomTextField(
-                        controller: _companyController,
-                        hintText: 'Your company name',
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Company name is required';
                           }
                           return null;
                         },
@@ -207,7 +205,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(height: 20),
                       const Text(
-                        'Confirm Password',
+                        'Organization (Optional)',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -216,24 +214,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(height: 8),
                       CustomTextField(
-                        controller: _confirmPasswordController,
-                        hintText: 'Confirm your password',
-                        obscureText: _obscureConfirmPassword,
-                        validator: _validateConfirmPassword,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: const Color(0xFF666666),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword =
-                                  !_obscureConfirmPassword;
-                            });
-                          },
+                        controller: _organizationController,
+                        hintText: 'Your company or organization',
+                        keyboardType: TextInputType.text,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Phone Number (Optional)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF333333),
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      CustomTextField(
+                        controller: _phoneController,
+                        hintText: '+1234567890',
+                        keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 24),
                       Row(
@@ -265,26 +263,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       const SizedBox(height: 32),
                       CustomButton(
                         text: 'Create Account',
-                        onPressed: _acceptTerms
-                            ? () {
-                                if (_formKey.currentState!.validate()) {
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const OilTypeSelectionScreen(),
-                                    ),
-                                  );
-                                }
-                              }
-                            : () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Please accept the terms and conditions',
-                                    ),
-                                  ),
-                                );
-                              },
+                        onPressed: _isLoading ? () {} : _handleSignUp,
+                        isLoading: _isLoading,
                         backgroundColor: _acceptTerms
                             ? const Color(0xFF4A90E2)
                             : const Color(0xFF9CA3AF),

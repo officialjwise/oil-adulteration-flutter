@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'sign_up_screen.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
-import 'dashboard_screen.dart';
 import 'forgot_password_screen.dart';
+import '../services/api_service.dart';
+import 'bottom_nav_scaffold.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -17,12 +18,42 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _obscurePassword = true;
+  bool _isLoading = false;
+  final ApiService _api = ApiService();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSignIn() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email and password are required')),
+      );
+      return;
+    }
+    setState(() => _isLoading = true);
+    final res = await _api.signIn(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+    setState(() => _isLoading = false);
+
+    if (!mounted) return;
+    if (res.isSuccess) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const BottomNavScaffold()),
+      );
+    } else {
+      String errorMsg = res.error ?? 'Sign in failed';
+      print('Sign in error: $errorMsg'); // For debugging
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMsg)));
+    }
   }
 
   @override
@@ -185,16 +216,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               // Sign In button
               CustomButton(
                 text: 'Sign In',
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const DashboardScreen(
-                        oilType: 'Engine Oil',
-                        inputMethod: 'Camera Analysis',
-                      ),
-                    ),
-                  );
-                },
+                onPressed: _isLoading ? () {} : _handleSignIn,
+                isLoading: _isLoading,
                 backgroundColor: const Color(0xFF4A90E2),
               ),
 

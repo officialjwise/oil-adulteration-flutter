@@ -28,14 +28,22 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color effectiveBg = backgroundColor ?? const Color(0xFF4A90E2);
+    final Brightness brightness = ThemeData.estimateBrightnessForColor(
+      effectiveBg,
+    );
+    final Color effectiveFg =
+        textColor ??
+        (brightness == Brightness.dark ? Colors.white : Colors.black);
+
     return SizedBox(
       width: width,
       height: height,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? const Color(0xFF4A90E2),
-          foregroundColor: textColor ?? Colors.white,
+          backgroundColor: effectiveBg,
+          foregroundColor: effectiveFg,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
           ),
@@ -56,7 +64,7 @@ class CustomButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 20),
+                    Icon(icon, size: 20, color: effectiveFg),
                     const SizedBox(width: 8),
                   ],
                   Text(
@@ -64,7 +72,7 @@ class CustomButton extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: textColor ?? Colors.white,
+                      color: effectiveFg,
                     ),
                   ),
                 ],

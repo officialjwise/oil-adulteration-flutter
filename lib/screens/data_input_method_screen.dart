@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_button.dart';
-import 'dashboard_screen.dart';
+import 'bottom_nav_scaffold.dart';
 
 class DataInputMethodScreen extends StatefulWidget {
   final String selectedOilType;
@@ -16,13 +16,6 @@ class _DataInputMethodScreenState extends State<DataInputMethodScreen> {
 
   final List<Map<String, dynamic>> inputMethods = [
     {
-      'method': 'Camera Analysis',
-      'description': 'Take a photo of your oil sample for instant analysis',
-      'icon': Icons.camera_alt,
-      'color': Color(0xFF3B82F6),
-      'features': ['Quick results', 'Visual inspection', 'Color analysis'],
-    },
-    {
       'method': 'Spectral Data Upload',
       'description': 'Upload spectroscopic data files for detailed analysis',
       'icon': Icons.upload_file,
@@ -31,24 +24,6 @@ class _DataInputMethodScreenState extends State<DataInputMethodScreen> {
         'High accuracy',
         'Detailed composition',
         'Professional grade',
-      ],
-    },
-    {
-      'method': 'Manual Entry',
-      'description': 'Enter test results manually from laboratory reports',
-      'icon': Icons.edit_note,
-      'color': Color(0xFF10B981),
-      'features': ['Lab report input', 'Custom parameters', 'Flexible format'],
-    },
-    {
-      'method': 'Sensor Integration',
-      'description': 'Connect directly to IoT sensors and monitoring devices',
-      'icon': Icons.sensors,
-      'color': Color(0xFFF59E0B),
-      'features': [
-        'Real-time data',
-        'Automated collection',
-        'Continuous monitoring',
       ],
     },
   ];
@@ -153,7 +128,9 @@ class _DataInputMethodScreenState extends State<DataInputMethodScreen> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(
+                              alpha: (0.05 * 255).round().toDouble(),
+                            ),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -168,7 +145,9 @@ class _DataInputMethodScreenState extends State<DataInputMethodScreen> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: method['color'].withOpacity(0.1),
+                                color: (method['color'] as Color).withValues(
+                                  alpha: (0.1 * 255).round().toDouble(),
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
@@ -216,8 +195,13 @@ class _DataInputMethodScreenState extends State<DataInputMethodScreen> {
                                                       vertical: 4,
                                                     ),
                                                 decoration: BoxDecoration(
-                                                  color: method['color']
-                                                      .withOpacity(0.1),
+                                                  color:
+                                                      (method['color'] as Color)
+                                                          .withValues(
+                                                            alpha: (0.1 * 255)
+                                                                .round()
+                                                                .toDouble(),
+                                                          ),
                                                   borderRadius:
                                                       BorderRadius.circular(6),
                                                 ),
@@ -285,10 +269,14 @@ class _DataInputMethodScreenState extends State<DataInputMethodScreen> {
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2B5CE6).withOpacity(0.1),
+                      color: const Color(
+                        0xFF2B5CE6,
+                      ).withValues(alpha: (0.1 * 255).round().toDouble()),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF2B5CE6).withOpacity(0.2),
+                        color: const Color(
+                          0xFF2B5CE6,
+                        ).withValues(alpha: (0.2 * 255).round().toDouble()),
                       ),
                     ),
                     child: Row(
@@ -319,10 +307,7 @@ class _DataInputMethodScreenState extends State<DataInputMethodScreen> {
                         ? () {
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
-                                builder: (context) => DashboardScreen(
-                                  oilType: widget.selectedOilType,
-                                  inputMethod: selectedMethod!,
-                                ),
+                                builder: (context) => const BottomNavScaffold(),
                               ),
                             );
                           }

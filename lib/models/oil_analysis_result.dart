@@ -5,6 +5,7 @@ class OilAnalysisResult {
   final String oilType;
   final String analysisTime;
   final DateTime timestamp;
+  final String? userId;
 
   OilAnalysisResult({
     required this.sampleId,
@@ -13,6 +14,7 @@ class OilAnalysisResult {
     required this.oilType,
     required this.analysisTime,
     required this.timestamp,
+    this.userId,
   });
 
   factory OilAnalysisResult.fromJson(Map<String, dynamic> json) {
@@ -22,7 +24,10 @@ class OilAnalysisResult {
       confidence: (json['confidence'] ?? 0.0).toDouble(),
       oilType: json['oil_type'] ?? 'Unknown',
       analysisTime: json['analysis_time'] ?? '0s',
-      timestamp: DateTime.now(),
+      timestamp: json['timestamp'] != null
+          ? DateTime.parse(json['timestamp'])
+          : DateTime.now(),
+      userId: json['user_id'],
     );
   }
 
@@ -34,6 +39,7 @@ class OilAnalysisResult {
       'oil_type': oilType,
       'analysis_time': analysisTime,
       'timestamp': timestamp.toIso8601String(),
+      'user_id': userId,
     };
   }
 

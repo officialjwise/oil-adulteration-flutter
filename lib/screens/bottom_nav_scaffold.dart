@@ -15,8 +15,8 @@ class BottomNavScaffold extends StatefulWidget {
 class _BottomNavScaffoldState extends State<BottomNavScaffold> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    DashboardScreen(oilType: 'Engine Oil', inputMethod: 'Manual'),
+  final List<Widget> _screens = const [
+    DashboardScreen(oilType: 'Palm Oil', inputMethod: 'Spectral Data Upload'),
     TestScreen(),
     ResultsScreen(),
     AnalyticsScreen(),
@@ -43,8 +43,6 @@ class _BottomNavScaffoldState extends State<BottomNavScaffold> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-          
-
             icon: Icon(Icons.science_outlined),
             label: 'Test',
           ),

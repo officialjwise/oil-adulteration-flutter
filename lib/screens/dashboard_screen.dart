@@ -22,7 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -96,7 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ),
                         IconButton(
                           onPressed: () {
-                            // Settings or profile
+                            // Profile
                           },
                           icon: const Icon(
                             Icons.account_circle,
@@ -146,7 +146,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withAlpha(51), // 0.2
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text(
@@ -164,7 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           Text(
                             'Input Method: ${widget.inputMethod}',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withAlpha(230), // 0.9
                               fontSize: 14,
                             ),
                           ),
@@ -172,7 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           Text(
                             'AI models are calibrated and ready for ${widget.oilType.toLowerCase()} analysis',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withAlpha(204), // 0.8
                               fontSize: 12,
                             ),
                           ),
@@ -196,7 +196,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   Tab(text: 'Analyze'),
                   Tab(text: 'History'),
                   Tab(text: 'Reports'),
-                  Tab(text: 'Settings'),
                 ],
               ),
             ),
@@ -209,7 +208,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildAnalyzeTab(),
                   _buildHistoryTab(),
                   _buildReportsTab(),
-                  _buildSettingsTab(),
                 ],
               ),
             ),
@@ -245,17 +243,6 @@ class _DashboardScreenState extends State<DashboardScreen>
             childAspectRatio: 1.2,
             children: [
               _buildQuickActionCard(
-                'Camera Scan',
-                'Take photo of oil sample',
-                Icons.camera_alt,
-                const Color(0xFF3B82F6),
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const TestScreen()),
-                  );
-                },
-              ),
-              _buildQuickActionCard(
                 'Upload Data',
                 'Import spectral data',
                 Icons.upload_file,
@@ -263,40 +250,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                 () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => const TestScreen()),
-                  );
-                },
-              ),
-              _buildQuickActionCard(
-                'Manual Input',
-                'Enter test values',
-                Icons.edit_note,
-                const Color(0xFF10B981),
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const TestScreen()),
-                  );
-                },
-              ),
-              _buildQuickActionCard(
-                'Live Sensor',
-                'Connect IoT device',
-                Icons.sensors,
-                const Color(0xFFF59E0B),
-                () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Live Sensor'),
-                      content: const Text(
-                        'Connect your IoT spectroscopic device for real-time analysis.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Close'),
-                        ),
-                      ],
-                    ),
                   );
                 },
               ),
@@ -318,24 +271,24 @@ class _DashboardScreenState extends State<DashboardScreen>
 
           _buildRecentAnalysisCard(
             'Sample #1001',
-            'Engine Oil',
-            'Good Condition',
+            'Palm Oil',
+            'Pure',
             '2 hours ago',
             const Color(0xFF10B981),
           ),
           _buildRecentAnalysisCard(
             'Sample #1002',
-            'Hydraulic Oil',
-            'Needs Attention',
+            'Groundnut Oil',
+            'Adulterated',
             '1 day ago',
-            const Color(0xFFF59E0B),
+            const Color(0xFFEF4444),
           ),
           _buildRecentAnalysisCard(
             'Sample #1003',
-            'Gear Oil',
-            'Replace Soon',
+            'Palm Oil',
+            'Pure',
             '3 days ago',
-            const Color(0xFFEF4444),
+            const Color(0xFF10B981),
           ),
         ],
       ),
@@ -358,7 +311,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withAlpha(13), // 0.05
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -371,7 +324,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withAlpha(26), // 0.1
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 24),
@@ -412,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha(13), // 0.05
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -467,9 +420,5 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildReportsTab() {
     return const Center(child: Text('Reports'));
-  }
-
-  Widget _buildSettingsTab() {
-    return const Center(child: Text('Settings'));
   }
 }

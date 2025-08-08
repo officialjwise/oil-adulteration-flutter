@@ -102,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           radius: 36,
                           backgroundColor: const Color(0xFF1746A2),
                           child: const Text(
-                            'DPT',
+                            'PT',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -184,11 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    _statCard(
-                      '1247',
-                      'Tests Completed',
-                      const Color(0xFF1746A2),
-                    ),
+                    _statCard('21', 'Tests Completed', const Color(0xFF1746A2)),
                     const SizedBox(width: 16),
                     _statCard('94.2%', 'Avg Accuracy', const Color(0xFF10B981)),
                   ],
@@ -215,21 +211,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _infoField('Full Name', 'Dr. Priscilla Torto'),
+                    _infoField('Full Name', 'Priscilla Torto'),
                     _infoField(
                       'Email Address',
-                      'priscilla@gmail.com',
+                      'priscillatorto43@gmail.com',
                       icon: Icons.email,
                       trailing: Icons.mark_email_read,
                     ),
-                    _infoField(
-                      'Organization',
-                      'Quality Control Labs Inc.',
-                      icon: Icons.apartment,
-                    ),
+                    _infoField('Institution', 'KNUST.', icon: Icons.apartment),
                     _infoField(
                       'Phone Number',
-                      '+23354000000',
+                      '+233 50 732 4148',
                       icon: Icons.phone,
                     ),
                   ],

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
+import '../services/api_service.dart';
+import 'bottom_nav_scaffold.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,9 +42,20 @@ class _SplashScreenState extends State<SplashScreen>
         timer.cancel();
         Timer(const Duration(milliseconds: 500), () {
           if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-            );
+            // Check if user is authenticated
+            if (ApiService.isAuthenticated()) {
+              // If authenticated, go to the dashboard with bottom navigation
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const BottomNavScaffold(),
+                ),
+              );
+            } else {
+              // If not authenticated, go to the welcome screen for login
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+              );
+            }
           }
         });
       }
@@ -80,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withAlpha(38), // 0.15
                     shape: BoxShape.circle,
                   ),
                   child: const Stack(
@@ -140,7 +153,7 @@ class _SplashScreenState extends State<SplashScreen>
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
                         value: progress,
-                        backgroundColor: Colors.white.withOpacity(0.3),
+                        backgroundColor: Colors.white.withAlpha(77), // 0.3
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           Color(0xFFEAB308),
                         ),
@@ -187,8 +200,9 @@ class _SplashScreenState extends State<SplashScreen>
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(
-                        (progress * 3 - index).clamp(0.3, 1.0),
+                      color: Colors.white.withAlpha(
+                        (((progress * 3 - index).clamp(0.3, 1.0)) * 255)
+                            .toInt(),
                       ),
                       shape: BoxShape.circle,
                     ),

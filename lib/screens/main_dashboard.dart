@@ -16,7 +16,7 @@ class _MainDashboardState extends State<MainDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = const [
-    DashboardScreen(oilType: 'Engine Oil', inputMethod: 'Manual'),
+    DashboardScreen(oilType: 'Palm Oil', inputMethod: 'Spectral Data Upload'),
     TestScreen(),
     ResultsScreen(),
     AnalyticsScreen(),
